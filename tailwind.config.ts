@@ -1,8 +1,4 @@
-import type { Config } from 'tailwindcss';
-
-const config: Config = {
-  content: ['./src/**/*.{ts,tsx,html}'],
-  plugins: [],
-}
-
-export default config;
+// Tailwind CSS v4では設定ファイルは最小限に
+export default {
+  // darkMode, content, colorsなどは globals.css の @theme で定義
+};
