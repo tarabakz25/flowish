@@ -1,36 +1,297 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## 1. プロジェクト概要
 
-## Getting Started
+**プロダクト名（仮）：** Personal English Lab (PoC)
 
-First, run the development server:
+**背景：**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- 英語学習サービスは多いが、「自分の興味に紐づいた英文」「AIとの議論」「スピーキングの可視化」が一連の体験としてまとまっているサービスが少ない。
+    
+- ユーザー（Kizuki）が自分の学習のためにまず使い、その後、英語教師のフィードバックを踏まえてブラッシュアップする想定。
+    
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**目的：**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- ユーザーの興味トピックに基づいた英文記事を生成し、それを使って
+    
+    1. リーディング
+        
+    2. AIとのディスカッション
+        
+    3. スピーキングの録音とフィードバック  
+        を1つの画面で完結させるPoCを作る。
+        
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**スコープ（PoC）：**
 
-## Learn More
+- Webブラウザで動作するシングルページアプリ（SPA）
+    
+- 認証・複数ユーザー管理は行わない（自分用 + 一部テスター）
+    
+- データ保存はlocalStorageレベルにとどめる
+    
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. 想定ユーザー・利用シーン
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**想定ユーザー（PoC時点）：**
 
-## Deploy on Vercel
+- Kizuki本人
+    
+- 英語教師（レビュー目的）
+    
+- 将来的には、英語中級者（高校〜社会人）
+    
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**利用シーン：**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 仕事/勉強の合間に、興味のあるトピックで英語をインプット&アウトプットしたいとき
+    
+- 毎日1セッション（10〜20分程度）を想定
+    
+
+---
+
+### 3. 画面/機能構成（PoC）
+
+**画面は1枚構成（`/`）とする。**
+
+セクション構成：
+
+1. トピック入力 & レベル選択
+    
+2. 英文記事表示
+    
+3. AIディスカッションチャット
+    
+4. スピーキング録音 & テキスト化 & フィードバック表示
+    
+
+---
+
+### 4. 機能要件
+
+#### F-01: 興味トピック入力・難易度設定
+
+- ユーザーはテキストボックスに、興味のあるトピックを入力できる
+    
+    - 例: `"startup, psychology, anime"`
+        
+    - 日本語/英語どちらでも可（そのままプロンプトに投げる）
+        
+- 難易度（レベル）を選択できる
+    
+    - 候補：A2 / B1 / B2 / C1
+        
+    - デフォルトは B2
+        
+
+#### F-02: 英文記事生成
+
+- 「記事を生成」ボタン押下で、OpenAI API を使って英文記事を生成する
+    
+- 条件：
+    
+    - 文字数目安：300〜400 words
+        
+    - 構成：簡単なイントロ → 本文 → まとめ
+        
+    - 指定されたトピックとレベルをプロンプトに反映
+        
+- 生成結果は画面中央に表示される
+    
+- 新しい記事生成時には、過去の議論やフィードバックはクリアする
+    
+
+※ PoC段階ではニュースソース連携なし。  
+　将来的に「事実ベースのニュース要約→再生成」を拡張要件とする。
+
+---
+
+#### F-03: AIディスカッション（テキストチャット）
+
+- ユーザーはテキストエリアに英文でメッセージを入力し、「送信」ボタンでAIに送信できる
+    
+- チャットは次の情報を含むプロンプトで処理される：
+    
+    - 記事本文
+        
+    - 過去のメッセージ履歴
+        
+- AIの応答ポリシー：
+    
+    - 記事の内容に基づいて議論する（脱線しすぎない）
+        
+    - 不自然な表現を軽く訂正・より自然な表現を提案
+        
+    - すべて英語で、短め・分かりやすく回答
+        
+- チャット履歴は画面内でスクロール表示される
+    
+
+---
+
+#### F-04: 音声録音
+
+- ブラウザの MediaRecorder を利用し、マイクから音声を録音できる
+    
+- UI:
+    
+    - 「録音開始」ボタン
+        
+    - 「録音停止」ボタン
+        
+    - 状態表示（録音中/停止中）
+        
+- 録音終了時：
+    
+    - Blob を `/api/speech-to-text` に送信する
+        
+
+制約：
+
+- 対応ブラウザはPC版 Chrome/Edge/Firefox を想定（モバイルはPoC範囲外）
+    
+- 録音形式は `audio/webm` などブラウザ標準
+    
+
+---
+
+#### F-05: 音声→テキスト変換（Speech-to-Text）
+
+- `/api/speech-to-text` で OpenAI の音声認識モデルを使用
+    
+- 入力：音声ファイル（webm）
+    
+- 出力：英語テキスト（transcript）
+    
+- テキストは画面上のテキストエリアに自動で反映され、ユーザーが編集可能
+    
+
+---
+
+#### F-06: スピーキングフィードバック生成
+
+- ユーザーは transcript（テキスト）を確認・編集した上で、「フィードバック生成」ボタンを押せる
+    
+- `/api/feedback` で OpenAI に以下を依頼：
+    
+    - 発音（Pronunciation & sounds）へのコメント（簡潔）
+        
+    - ストレス・リズム（Stress & rhythm）に関する1〜2点の指摘
+        
+    - 文法・表現の改善（Expression & grammar）
+        
+    - 練習用の英作文例（3文程度）
+        
+- 出力は1つのテキストとして画面下部に表示される
+    
+
+---
+
+#### F-07: セッション履歴保存（ローカルのみ）
+
+- 直近 N 件（例: 5件）のセッションについて、以下を localStorage に保存：
+    
+    - 日時
+        
+    - トピック
+        
+    - 生成記事（article）
+        
+    - 最後の transcript
+        
+    - 簡易メモ（任意。PoCでは自動メモでもよい）
+        
+- 別画面は作らず、「過去のセッション一覧」として簡易表示するか、PoCではとりあえず保存だけでもOK（ここは実装コストと相談）
+    
+
+---
+
+### 5. 非機能要件
+
+#### 5.1 対応環境
+
+- ブラウザ：
+    
+    - PC版 Google Chrome 最新版
+        
+    - 可能なら Edge / Firefox も動作確認
+        
+- 画面サイズ：
+    
+    - 幅 1024px 以上を前提（スマホ最適化はPoC範囲外）
+        
+
+#### 5.2 性能
+
+- 記事生成：10秒以内を目標（API応答に依存）
+    
+- 音声→テキスト変換：30秒以内（録音の長さにも依存）
+    
+- タイムアウト・エラーハンドリング：
+    
+    - API失敗時は簡単なエラーメッセージを表示し、再試行可能にする
+        
+
+#### 5.3 セキュリティ
+
+- OpenAI APIキーはクライアントから見えないよう、Next.js API Routes内で利用（環境変数）
+    
+- ユーザー識別は行わないが、録音データやテキストはサーバー側で長期保存しない（処理後破棄）
+    
+- HTTPS 前提（Vercel等にデプロイ）
+    
+
+#### 5.4 ログ・モニタリング（PoC）
+
+- コンソールログ + 簡易的なエラー表示のみ
+    
+- 本番運用レベルのモニタリングは範囲外
+    
+
+---
+
+### 6. 外部サービス・API
+
+- OpenAI Chat Completions API
+    
+    - 記事生成（F-02）
+        
+    - ディスカッション返信（F-03）
+        
+    - フィードバック生成（F-06）
+        
+- OpenAI Audio API（Whisper）
+    
+    - Speech-to-Text（F-05）
+        
+
+※ ニュースソースやX APIとの連携は**将来の拡張**として要件外に置く。
+
+---
+
+### 7. 前提・制約
+
+- ユーザーは1名想定（Kizuki）＋一時的なレビュー用ユーザー
+    
+- データ消失しても大きな問題にはならない（PoCのため）
+    
+- 英語教師からのフィードバックを受けて仕様変更が発生する前提（要件はDraftとして扱う）
+    
+- モバイル対応、ユーザー管理、本格的なダッシュボード、課金機能はPoCスコープ外
+    
+
+---
+
+### 8. 将来拡張（今回の要件には含めない）
+
+- 新規登録時のタグ選択UI（X風）と「興味プロフィール」管理
+    
+- ニュースサイト / RSS からのトピック取得 → 事実ベース要約 → 再構成記事
+    
+- ユーザーごとの成長トラッキングダッシュボード
+    
+- レッスン単位での宿題出し機能（英語教師向け）
+    
+- サブスク課金 / クレカ決済連携
