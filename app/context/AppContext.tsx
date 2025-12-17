@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import type { Session, CEFRLevel, Message, AppError } from '@/types'
-import { loadSessions, saveSession } from '@/utils/storage'
+import { toast } from 'sonner'
 
 type AppContextType = {
   // Session管理
@@ -60,19 +60,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // セッション読み込み
-  const loadSession = useCallback((sessionId: string) => {
-    const sessions = loadSessions()
-    const session = sessions.find(s => s.id === sessionId)
-    if (session) {
-      setCurrentSession(session)
-      setError(null)
-      // トップにスクロール
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+  const loadSession = useCallback(async (sessionId: string) => {
+    try {
+      const response = await fetch('/api/sessions')
+      const result = await response.json()
+
+      if (result.success) {
+        const session = result.data.find((s: Session) => s.id === sessionId)
+        if (session) {
+          setCurrentSession(session)
+          setError(null)
+          // トップにスクロール
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        } else {
+          toast.error('セッションが見つかりませんでした')
+        }
+      } else {
+        toast.error('セッションの読み込みに失敗しました')
+      }
+    } catch (error) {
+      console.error('Failed to load session:', error)
+      toast.error('セッションの読み込みに失敗しました')
     }
   }, [])
 
   // 記事更新
-  const updateArticle = useCallback((article: string) => {
+  const updateArticle = useCallback(async (article: string) => {
     if (!currentSession) return
     
     const updated: Session = {
@@ -83,12 +96,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       feedback: null,
     }
     setCurrentSession(updated)
-    saveSession(updated)
-    // セッション保存の通知は自動保存なので控えめに（Phase 2で実装）
+    
+    try {
+      const response = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      })
+      const result = await response.json()
+      if (!result.success) {
+        console.error('Failed to save session:', result.error)
+      }
+    } catch (error) {
+      console.error('Failed to save session:', error)
+    }
   }, [currentSession])
 
   // チャットメッセージ追加
-  const addChatMessage = useCallback((message: Message) => {
+  const addChatMessage = useCallback(async (message: Message) => {
     if (!currentSession) return
     
     const updated: Session = {
@@ -96,11 +121,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       chatMessages: [...currentSession.chatMessages, message],
     }
     setCurrentSession(updated)
-    saveSession(updated)
+    
+    try {
+      const response = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      })
+      const result = await response.json()
+      if (!result.success) {
+        console.error('Failed to save session:', result.error)
+      }
+    } catch (error) {
+      console.error('Failed to save session:', error)
+    }
   }, [currentSession])
 
   // トランスクリプト更新
-  const updateTranscript = useCallback((transcript: string) => {
+  const updateTranscript = useCallback(async (transcript: string) => {
     if (!currentSession) return
     
     const updated: Session = {
@@ -108,11 +146,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       transcript,
     }
     setCurrentSession(updated)
-    saveSession(updated)
+    
+    try {
+      const response = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      })
+      const result = await response.json()
+      if (!result.success) {
+        console.error('Failed to save session:', result.error)
+      }
+    } catch (error) {
+      console.error('Failed to save session:', error)
+    }
   }, [currentSession])
 
   // フィードバック更新
-  const updateFeedback = useCallback((feedback: string) => {
+  const updateFeedback = useCallback(async (feedback: string) => {
     if (!currentSession) return
     
     const updated: Session = {
@@ -120,24 +171,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
       feedback,
     }
     setCurrentSession(updated)
-    saveSession(updated)
-    // セッション保存の通知は自動保存なので控えめに（Phase 2で実装）
+    
+    try {
+      const response = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      })
+      const result = await response.json()
+      if (!result.success) {
+        console.error('Failed to save session:', result.error)
+      }
+    } catch (error) {
+      console.error('Failed to save session:', error)
+    }
   }, [currentSession])
 
   const clearError = useCallback(() => {
     setError(null)
   }, [])
 
-  // 初期化時にlocalStorageから最新セッションを読み込む
+  // URLパラメータからセッションを読み込む
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const sessions = loadSessions()
-      // 最新のセッションを読み込む（オプション）
-      // 今回は空の状態から開始するため、コメントアウト
-      // if (sessions.length > 0 && !currentSession) {
-      //   setCurrentSession(sessions[0])
-      // }
+      const params = new URLSearchParams(window.location.search)
+      const sessionId = params.get('session')
+      if (sessionId && !currentSession) {
+        void loadSession(sessionId)
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (

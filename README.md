@@ -284,7 +284,36 @@
 
 ---
 
-### 8. 将来拡張（今回の要件には含めない）
+### 8. セットアップ手順
+
+#### 環境変数の設定
+
+`.env.local` ファイルを作成し、以下の環境変数を設定してください：
+
+```bash
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_api_key
+```
+
+#### Supabase セットアップ
+
+1. [Supabase](https://supabase.com) でプロジェクトを作成
+2. SQL Editor で `supabase/schema.sql` を実行してテーブルとRLSポリシーを作成
+3. 環境変数に Supabase の URL とキーを設定
+
+#### 開発サーバーの起動
+
+```bash
+bun install
+bun run dev
+```
+
+### 9. 将来拡張（今回の要件には含めない）
 
 - 新規登録時のタグ選択UI（X風）と「興味プロフィール」管理
     

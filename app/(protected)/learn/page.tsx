@@ -1,14 +1,14 @@
-import { AppProvider } from './context/AppContext'
-import { TopicInput } from './components/TopicInput'
-import { ArticleDisplay } from './components/ArticleDisplay'
-import { ChatSection } from './components/ChatSection'
-import { SpeakingSection } from './components/SpeakingSection'
-import { FeedbackDisplay } from './components/FeedbackDisplay'
-import { ErrorDisplay } from './components/ErrorDisplay'
-import { SessionHistory } from './components/SessionHistory'
+import { AppProvider } from '../../context/AppContext'
+import { TopicInput } from '../../components/TopicInput'
+import { ArticleDisplay } from '../../components/ArticleDisplay'
+import { ChatSection } from '../../components/ChatSection'
+import { SpeakingSection } from '../../components/SpeakingSection'
+import { FeedbackDisplay } from '../../components/FeedbackDisplay'
+import { ErrorDisplay } from '../../components/ErrorDisplay'
+import { SessionHistory } from '../../components/SessionHistory'
 import { Separator } from '@/components/ui/separator'
 
-export default function Home() {
+export default function LearnPage() {
   return (
     <AppProvider>
       <div className="min-h-screen bg-base p-8">
@@ -43,3 +43,4 @@ export default function Home() {
     </AppProvider>
   )
 }
+

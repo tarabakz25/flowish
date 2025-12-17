@@ -50,7 +50,7 @@ export function TopicInput() {
           retryable: true
         })
       }
-    } catch (err) {
+    } catch {
       setError({
         type: 'network',
         message: 'ネットワークエラーが発生しました',

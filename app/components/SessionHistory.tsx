@@ -8,7 +8,6 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { History, Trash2 } from 'lucide-react'
 import { useApp } from '@/app/context/AppContext'
-import { loadSessions, deleteSession, clearAllSessions } from '@/utils/storage'
 import { motion } from 'framer-motion'
 import { slideFromRight } from '@/lib/animations'
 import { toast } from 'sonner'
@@ -16,15 +15,31 @@ import type { Session } from '@/types'
 
 export function SessionHistory() {
   const { currentSession, loadSession } = useApp()
-  const [sessions, setSessions] = useState<Session[]>(() => loadSessions())
+  const [sessions, setSessions] = useState<Session[]>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [clearDialogOpen, setClearDialogOpen] = useState(false)
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
 
   // セッションリストを更新する関数
-  const refreshSessions = useCallback(() => {
-    const loaded = loadSessions()
-    setSessions(loaded)
+  const refreshSessions = useCallback(async () => {
+    try {
+      const response = await fetch('/api/sessions')
+      const result = await response.json()
+
+      if (result.success) {
+        setSessions(result.data || [])
+      } else {
+        toast.error('セッションの読み込みに失敗しました')
+      }
+    } catch (error) {
+      console.error('Failed to load sessions:', error)
+      toast.error('セッションの読み込みに失敗しました')
+    }
+  }, [])
+
+  useEffect(() => {
+    void refreshSessions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // セッションが更新されたらリストを再読み込み（イベントハンドラ経由で呼び出す）
@@ -37,14 +52,15 @@ export function SessionHistory() {
       prevSessionIdRef.current = currentSession?.id
       // 次のレンダリングサイクルで更新
       setTimeout(() => {
-        refreshSessions()
+        void refreshSessions()
       }, 0)
     }
-  }, [currentSession?.id, refreshSessions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSession?.id])
 
-  const handleLoadSession = (sessionId: string) => {
-    loadSession(sessionId)
-    refreshSessions()
+  const handleLoadSession = async (sessionId: string) => {
+    await loadSession(sessionId)
+    await refreshSessions()
     toast.success('Session loaded', {
       description: 'セッションを読み込みました'
     })
@@ -55,25 +71,49 @@ export function SessionHistory() {
     setDeleteDialogOpen(true)
   }
 
-  const handleDeleteConfirm = () => {
-    if (sessionToDelete) {
-      deleteSession(sessionToDelete)
-      refreshSessions()
-      setDeleteDialogOpen(false)
-      setSessionToDelete(null)
-      toast.success('Session deleted', {
-        description: 'セッションを削除しました'
+  const handleDeleteConfirm = async () => {
+    if (!sessionToDelete) return
+
+    try {
+      const response = await fetch(`/api/sessions?id=${sessionToDelete}`, {
+        method: 'DELETE',
       })
+
+      const result = await response.json()
+
+      if (result.success) {
+        await refreshSessions()
+        setDeleteDialogOpen(false)
+        setSessionToDelete(null)
+        toast.success('Session deleted', {
+          description: 'セッションを削除しました'
+        })
+      } else {
+        toast.error('セッションの削除に失敗しました')
+      }
+    } catch (error) {
+      console.error('Failed to delete session:', error)
+      toast.error('セッションの削除に失敗しました')
     }
   }
 
-  const handleClearAll = () => {
-    clearAllSessions()
-    setSessions([])
-    setClearDialogOpen(false)
-    toast.success('History cleared', {
-      description: '全セッション履歴を削除しました'
-    })
+  const handleClearAll = async () => {
+    try {
+      // 全セッションを削除
+      const deletePromises = sessions.map(session =>
+        fetch(`/api/sessions?id=${session.id}`, { method: 'DELETE' })
+      )
+      await Promise.all(deletePromises)
+      
+      setSessions([])
+      setClearDialogOpen(false)
+      toast.success('History cleared', {
+        description: '全セッション履歴を削除しました'
+      })
+    } catch (error) {
+      console.error('Failed to clear sessions:', error)
+      toast.error('セッション履歴の削除に失敗しました')
+    }
   }
 
   const formatTime = (timestamp: number) => {
