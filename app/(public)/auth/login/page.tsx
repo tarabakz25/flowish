@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,6 +38,29 @@ export default function LoginPage() {
       toast.error('ログインに失敗しました')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleOAuthLogin = async (provider: 'google' | 'github') => {
+    try {
+      setOauthLoading(provider)
+      const supabase = createClient()
+
+      const redirectTo = `${window.location.origin}/api/auth/callback?next=/dashboard`
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo,
+        },
+      })
+
+      if (error) {
+        toast.error(error.message)
+      }
+    } catch {
+      toast.error('外部プロバイダでのログインに失敗しました')
+    } finally {
+      setOauthLoading(null)
     }
   }
 
@@ -79,14 +103,31 @@ export default function LoginPage() {
             />
           </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'ログイン中...' : 'ログイン'}
           </Button>
         </form>
+
+        <div className="space-y-3">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={loading || oauthLoading !== null}
+            onClick={() => handleOAuthLogin('google')}
+          >
+            {oauthLoading === 'google' ? 'Googleでログイン中...' : 'Googleでログイン'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={loading || oauthLoading !== null}
+            onClick={() => handleOAuthLogin('github')}
+          >
+            {oauthLoading === 'github' ? 'GitHubでログイン中...' : 'GitHubでログイン'}
+          </Button>
+        </div>
 
         <div className="text-center text-sm text-subtext1">
           <span>アカウントをお持ちでない方は</span>{' '}

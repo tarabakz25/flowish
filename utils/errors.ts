@@ -58,3 +58,5 @@ export function handleMicrophoneError(error: unknown): AppError {
   return createError('permission', 'マイクアクセスに失敗しました。', true, error)
 }
 
+
+
