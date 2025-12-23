@@ -8,25 +8,22 @@ Copy `.env.example` to `.env.local` and fill in:
 
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`: Supabase (Auth + Storage)
 - `SUPABASE_SERVICE_ROLE_KEY`: (server-only) optional, for admin tasks
-- `DATABASE_URL`: Neon Postgres connection string (used by Drizzle)
+- `DATABASE_URL`: Supabase Postgres connection string (used by Drizzle)
 
 ## Storage (Supabase)
 
-Supabase Storage is backed by your Supabase project (it’s not “moved” to Neon). Typical setup is:
-
-- Use Supabase for Auth + Storage
-- Use Neon + Drizzle for your app tables (separate DB)
-
 Client-side upload example helper: `utils/supabase/storage.ts:1`.
 
-## Database (Drizzle + Neon)
+## Database (Drizzle + Supabase Postgres)
 
-Generate migrations and apply them to Neon:
+Generate migrations and apply them to Supabase Postgres:
 
 ```bash
 bun run db:generate
 bun run db:migrate
 ```
+
+`DATABASE_URL` is the Postgres connection string from the Supabase dashboard (Database → Connection string). Prefer the “Transaction pooler” URL for serverless/Next.js.
 
 First, run the development server:
 
