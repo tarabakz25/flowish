@@ -6,8 +6,18 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 Copy `.env.example` to `.env.local` and fill in:
 
-- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`: Supabase (Auth)
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`: Supabase (Auth + Storage)
+- `SUPABASE_SERVICE_ROLE_KEY`: (server-only) optional, for admin tasks
 - `DATABASE_URL`: Neon Postgres connection string (used by Drizzle)
+
+## Storage (Supabase)
+
+Supabase Storage is backed by your Supabase project (it’s not “moved” to Neon). Typical setup is:
+
+- Use Supabase for Auth + Storage
+- Use Neon + Drizzle for your app tables (separate DB)
+
+Client-side upload example helper: `utils/supabase/storage.ts:1`.
 
 ## Database (Drizzle + Neon)
 
