@@ -2,6 +2,22 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+## Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in:
+
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`: Supabase (Auth)
+- `DATABASE_URL`: Neon Postgres connection string (used by Drizzle)
+
+## Database (Drizzle + Neon)
+
+Generate migrations and apply them to Neon:
+
+```bash
+bun run db:generate
+bun run db:migrate
+```
+
 First, run the development server:
 
 ```bash
